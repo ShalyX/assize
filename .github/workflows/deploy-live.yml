@@ -1,0 +1,88 @@
+name: Deploy Assize Live to Midnight (Ledger 9)
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Target Midnight Ledger 9 network (preview needs no Blockfrost key; preprod needs BLOCKFROST_PROJECT_ID)'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - preprod
+      scenario:
+        description: 'Tender scenario(s) to deploy and execute live on-chain'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - finalized
+          - contested
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    services:
+      proof-server:
+        image: midnightntwrk/proof-server:9.0.2
+        ports:
+          - 6300:6300
+        options: >-
+          --health-cmd "curl -f http://localhost:6300/health || exit 1"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 40
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Compact 0.36.1 toolchain and generate ZK prover/verifier keys
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          compact update 0.36.1
+          compact compile contracts/src/assize.compact contracts/managed/assize
+          ls -lh contracts/managed/assize/keys/
+
+      - name: Install contract & Midnight.js 5.0.1 dependencies
+        working-directory: contracts
+        run: npm ci
+
+      - name: Verify 104 contract & guard tests pass
+        working-directory: contracts
+        run: npm test
+
+      - name: Deploy & execute live on Midnight (${{ inputs.network }})
+        working-directory: contracts
+        env:
+          MIDNIGHT_NETWORK: ${{ inputs.network }}
+          MIDNIGHT_PROOF_SERVER_URL: http://127.0.0.1:6300
+          WALLET_SEED: ${{ secrets.WALLET_SEED }}
+          PRIVATE_STATE_PASSWORD: ${{ secrets.PRIVATE_STATE_PASSWORD }}
+          BLOCKFROST_PROJECT_ID: ${{ secrets.BLOCKFROST_PROJECT_ID }}
+        run: npx tsx src/deploy-live.ts --network "${{ inputs.network }}" --scenario "${{ inputs.scenario }}"
+
+      - name: Upload live deployment manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: assize-deployment-${{ inputs.network }}
+          path: deployments/${{ inputs.network }}.json
+
+      - name: Commit verified deployment manifest to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployments/${{ inputs.network }}.json
+          git diff --cached --quiet || git commit -m "chore(deploy): record live verified Midnight ${{ inputs.network }} contract addresses & tx hashes"
+          git push

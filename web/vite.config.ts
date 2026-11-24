@@ -8,8 +8,8 @@ export default defineConfig({
   resolve: {
     dedupe: ['@midnight-ntwrk/compact-runtime', '@midnight-ntwrk/onchain-runtime-v4'],
     alias: {
-      '@assize/crypto': path.resolve(__dirname, '../packages/crypto/index.ts'),
-      '@assize/contract': path.resolve(__dirname, '../contracts/managed/assize/contract/index.js'),
+      '@assize/crypto': path.resolve(__dirname, 'src/generated/crypto.ts'),
+      '@assize/contract': path.resolve(__dirname, 'src/generated/contract/index.js'),
       '@midnight-ntwrk/compact-runtime': path.resolve(
         __dirname,
         'node_modules/@midnight-ntwrk/compact-runtime'

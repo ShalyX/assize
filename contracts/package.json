@@ -7,10 +7,24 @@
   "description": "Assize Midnight Compact 0.36.1 procurement contract, WebCrypto envelopes, simulator, and guard-mutation test suite",
   "scripts": {
     "test": "vitest run",
-    "test:mutations": "tsx test/mutations.ts"
+    "test:mutations": "tsx test/mutations.ts",
+    "deploy:live": "tsx src/deploy-live.ts"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-runtime": "0.21.0"
+    "@midnight-ntwrk/compact-runtime": "0.21.0",
+    "@midnight-ntwrk/midnight-js-contracts": "5.0.1",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "5.0.1",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "5.0.1",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "5.0.1",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "5.0.1",
+    "@midnight-ntwrk/midnight-js-protocol": "5.0.1",
+    "@midnight-ntwrk/midnight-js-types": "5.0.1",
+    "@midnight-ntwrk/midnight-js-utils": "5.0.1",
+    "@midnightntwrk/wallet-sdk": "2.0.1",
+    "@scure/bip39": "2.4.0",
+    "@types/ws": "^8.18.2",
+    "rxjs": "7.8.2",
+    "ws": "^8.23.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

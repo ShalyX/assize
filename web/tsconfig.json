@@ -13,9 +13,9 @@
     "jsx": "react-jsx",
     "strict": true,
     "paths": {
-      "@assize/crypto": ["../packages/crypto/index.ts"],
-      "@assize/contract": ["../contracts/managed/assize/contract/index.d.ts"]
+      "@assize/crypto": ["./src/generated/crypto.ts"],
+      "@assize/contract": ["./src/generated/contract/index.d.ts"]
     }
   },
-  "include": ["src", "../packages/crypto"]
+  "include": ["src"]
 }
