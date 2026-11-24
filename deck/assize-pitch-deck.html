@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Assize — Verifiable Sealed-Bid Public Procurement on Midnight</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @page {
+        size: 1280px 720px;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e9e6de;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #14191f;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .slide {
+        width: 1280px;
+        height: 720px;
+        background: #f8f7f4;
+        position: relative;
+        overflow: hidden;
+        padding: 52px 64px 48px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        page-break-after: always;
+        break-after: page;
+        border-bottom: 1px solid #d5d1c7;
+      }
+      .slide:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .serif {
+        font-family: 'Newsreader', Georgia, serif;
+      }
+      .mono {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-variant-numeric: tabular-nums;
+      }
+      .kicker {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #1b3b6f;
+        margin-bottom: 10px;
+      }
+      h1 {
+        font-family: 'Newsreader', Georgia, serif;
+        font-size: 46px;
+        line-height: 1.08;
+        font-weight: 600;
+        margin: 0 0 14px;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-family: 'Newsreader', Georgia, serif;
+        font-size: 34px;
+        line-height: 1.15;
+        font-weight: 600;
+        margin: 0 0 10px;
+        letter-spacing: -0.015em;
+      }
+      .lead {
+        font-size: 16px;
+        line-height: 1.55;
+        color: #4e5863;
+        margin: 0;
+        max-width: 820px;
+      }
+      .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e4e1da;
+        padding-bottom: 14px;
+        margin-bottom: 24px;
+      }
+      .footer-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #e4e1da;
+        padding-top: 12px;
+        font-size: 11px;
+        color: #6c7682;
+      }
+      .sheet {
+        background: #ffffff;
+        border: 1px solid #e4e1da;
+        border-radius: 6px;
+        padding: 18px 20px;
+      }
+      .sheet-navy {
+        border-left: 3px solid #1b3b6f;
+      }
+      .sheet-crimson {
+        background: #fef2f2;
+        border-color: #fecaca;
+        border-left: 3px solid #991b1b;
+      }
+      .sheet-green {
+        background: #ecfdf5;
+        border-color: #bbf7d0;
+        border-left: 3px solid #166534;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+      }
+      .split-7-5 {
+        display: grid;
+        grid-template-columns: 7fr 5fr;
+        gap: 24px;
+        align-items: start;
+      }
+      .tag {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 3px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .tag-navy {
+        background: #eef3fa;
+        color: #1b3b6f;
+        border: 1px solid #c7d7ef;
+      }
+      .tag-green {
+        background: #ecfdf5;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+      }
+      .tag-crimson {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+      .tag-private {
+        background: #eef2ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #4e5863;
+        background: #f1efe9;
+        padding: 9px 12px;
+        border-bottom: 1px solid #e4e1da;
+      }
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #e4e1da;
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .metric {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 32px;
+        font-weight: 600;
+        color: #1b3b6f;
+        line-height: 1.1;
+      }
+      .metric-label {
+        font-size: 12px;
+        color: #4e5863;
+        margin-top: 6px;
+      }
+      .screenshot-frame {
+        border: 1px solid #cfc9be;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 4px 16px rgba(20, 25, 31, 0.06);
+      }
+      .screenshot-frame img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      ul.clean {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: #2f3842;
+      }
+      ul.clean li {
+        margin-bottom: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- SLIDE 1: COVER -->
+    <section class="slide">
+      <div class="header-bar">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="2" width="11" height="24" rx="2" fill="#1B3B6F" />
+            <rect x="15" y="2" width="11" height="24" rx="2" fill="#F1EFE9" stroke="#1B3B6F" stroke-width="1.5" />
+            <path d="M18.2 14.2L20.1 16.1L23.5 12" stroke="#166534" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="14" y1="2" x2="14" y2="26" stroke="#F8F7F4" stroke-width="1.5" />
+          </svg>
+          <span class="serif" style="font-size: 24px; font-weight: 700">Assize</span>
+        </div>
+        <span class="tag tag-navy">Build Privacy-First Apps on Midnight · Wave 3</span>
+      </div>
+
+      <div class="split-7-5" style="margin: auto 0">
+        <div>
+          <div class="kicker">Verifiable Sealed-Bid Public Procurement</div>
+          <h1>Prove the lowest compliant bid won—without exposing losing bids.</h1>
+          <p class="lead" style="margin-top: 14px">
+            Assize is a Midnight-native cryptographic procurement ledger built in Compact 0.36.1.
+            Losing contractor prices stay confidential against rivals, the public, and blockchain
+            observers forever—while zero-knowledge proofs prevent silent omission, rigged awards,
+            and unchallenged pretextual exclusions.
+          </p>
+          <div style="display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap">
+            <span class="tag tag-green">Compact 0.36.1 · 8 Circuits · 16 ZK Keys</span>
+            <span class="tag tag-navy">104 Automated Tests · 26 Mutants</span>
+            <span class="tag tag-private">Apache-2.0 Open Source</span>
+          </div>
+        </div>
+
+        <div class="sheet sheet-navy">
+          <div class="kicker" style="margin-bottom: 12px">Reference Pilot Tender</div>
+          <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px">
+            Civic Bridge Deck Rehabilitation — Phase II
+          </div>
+          <div class="mono" style="font-size: 12px; color: #4e5863; margin-bottom: 14px">
+            PW-2026-041 · CA PCC §§ 10180, 20128, 20162 &amp; § 4101
+          </div>
+          <table>
+            <tr>
+              <th>Metric</th>
+              <th>Guarantee</th>
+            </tr>
+            <tr>
+              <td class="mono">Privacy Boundary</td>
+              <td>Confidential vs. rivals, public &amp; chain; adjudicator decrypts post-deadline</td>
+            </tr>
+            <tr>
+              <td class="mono">Completeness</td>
+              <td>Frozen commitment root &amp; count consumed exhaustively by <span class="mono">proveAward</span></td>
+            </tr>
+            <tr>
+              <td class="mono">ZK Protest</td>
+              <td>Excluded bidder proves <span class="mono">myPrice &lt; awardedPrice</span> without revealing price</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">ASSIZE · MIDNIGHT COMPACT 0.36.1 · LEDGER 9</span>
+        <span class="mono">01 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: THE PROBLEM -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">01 · The Transparency Paradox</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Problem &amp; Legal Grounding</span>
+      </div>
+
+      <div>
+        <h2>Public procurement is trapped between cartel transparency and opaque favoritism.</h2>
+        <p class="lead">
+          Governments spend 12–13% of GDP on public contracts. Today they must choose between two broken models.
+        </p>
+
+        <div class="grid-3" style="margin-top: 24px">
+          <div class="sheet">
+            <div class="metric">12–13%</div>
+            <div class="metric-label"><strong>Share of global GDP</strong> spent via public procurement (OECD)</div>
+          </div>
+          <div class="sheet">
+            <div class="metric" style="color: #991b1b">20%+</div>
+            <div class="metric-label"><strong>Average price inflation</strong> caused by bid-rigging cartels (OECD)</div>
+          </div>
+          <div class="sheet">
+            <div class="metric">§ 4101</div>
+            <div class="metric-label"><strong>CA PCC anti-bid-shopping</strong> + §§ 10180/20128/20162 owner-award law</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 20px">
+          <div class="sheet sheet-crimson">
+            <div class="tag tag-crimson" style="margin-bottom: 8px">Failure Mode A: Full Transparency</div>
+            <div style="font-weight: 600; margin-bottom: 6px">Public ledgers &amp; open bid tabs fuel bid-rigging cartels</div>
+            <p style="margin: 0; font-size: 13.5px; color: #4e5863">
+              Publishing every losing bid and unit price allows cartels to instantly detect and punish
+              defectors, exposes sensitive contractor cost structures, and violates commercial
+              confidentiality norms (EU Dir. 2014/24/EU Art. 21).
+            </p>
+          </div>
+          <div class="sheet sheet-crimson">
+            <div class="tag tag-crimson" style="margin-bottom: 8px">Failure Mode B: Opaque Closed Rooms</div>
+            <div style="font-weight: 600; margin-bottom: 6px">Traditional portals cannot prove the adjudicator played fair</div>
+            <p style="margin: 0; font-size: 13.5px; color: #4e5863">
+              Corrupt officials silently omit lower bids, alter rankings, or pretextually disqualify
+              an outside low bidder as "not responsible" to steer contracts to incumbents—leaving
+              excluded bidders unable to prove harm without leaking their own bid.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">OECD Public Procurement · CA PCC §§ 10180, 20128, 20162, 4101 · City of Inglewood (7 Cal.3d 861)</span>
+        <span class="mono">02 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: HONEST PRIVACY BOUNDARY -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">02 · Honest Privacy Boundary</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Who Sees What, When</span>
+      </div>
+
+      <div>
+        <h2>Explicit, verifiable confidentiality—with zero overclaiming.</h2>
+        <p class="lead">
+          Assize enforces confidentiality against competing bidders, the public, and blockchain observers across every phase, while keeping the authorized procurement adjudicator cryptographically accountable after the deadline.
+        </p>
+
+        <div class="sheet" style="margin-top: 22px; padding: 0; overflow: hidden">
+          <table>
+            <thead>
+              <tr>
+                <th>Actor</th>
+                <th>OPEN (Pre-Deadline)</th>
+                <th>REVEAL (Post-Deadline)</th>
+                <th>AWARDED / FINALIZED</th>
+                <th>CONTESTED (ZK Protest)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Competing Bidders</strong></td>
+                <td>See only opaque commitments &amp; nullifier count</td>
+                <td>See only <span class="mono">sha256</span> delivery receipts</td>
+                <td>See winner's price &amp; reason codes; <strong>zero losing prices</strong></td>
+                <td>See challenger slot &amp; ZK proof only; <strong>price stays hidden</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Public &amp; Chain Observers</strong></td>
+                <td>See frozen parameters, prequal root &amp; commitments</td>
+                <td>See frozen commitment root &amp; receipt flags</td>
+                <td>Verify complete-set ZK award proof; <strong>zero losing prices</strong></td>
+                <td>Verify <span class="mono">CONTESTED</span> state &amp; evidence hashes</td>
+              </tr>
+              <tr>
+                <td><strong>Authorized Adjudicator</strong></td>
+                <td><strong>Sees ZERO plaintext bids</strong> (no envelopes delivered)</td>
+                <td>Decrypts off-chain WebCrypto RSA-OAEP/AES-GCM envelopes</td>
+                <td>Must prove exhaustive complete-set <span class="mono">proveAward</span></td>
+                <td>Bound by public on-chain exclusion code &amp; evidence hash</td>
+              </tr>
+              <tr>
+                <td><strong>Excluded Low Bidder</strong></td>
+                <td>Holds private bid witness &amp; Merkle path</td>
+                <td>Anchors on-chain <span class="mono">deliverOpening</span> receipt</td>
+                <td>Inspects public exclusion reason code &amp; awarded price</td>
+                <td>Proves <span class="mono">myPrice &lt; awardedPrice</span> in ZK; flips tender <span class="mono">CONTESTED</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">Honest Boundary: Adjudicator receives openings post-deadline; Phase 2 Timelock removes bidder non-reveal dependency</span>
+        <span class="mono">03 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: WHY MIDNIGHT IS CORE -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">03 · Dual-Ledger Architecture</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Midnight Centrality: CORE</span>
+      </div>
+
+      <div>
+        <h2>Impossible on transparent EVM chains. Native to Midnight Compact.</h2>
+        <p class="lead">
+          Assize requires a single execution environment where private witnesses never touch public state, yet public state transitions are gated by zero-knowledge proofs over the complete bid set.
+        </p>
+
+        <div class="grid-2" style="margin-top: 22px">
+          <div class="sheet sheet-navy">
+            <div class="tag tag-private" style="margin-bottom: 10px">Private Witness Layer (Off-Chain / Local)</div>
+            <ul class="clean">
+              <li><strong>Bidder Secrets &amp; Prices:</strong> <span class="mono">bidderSecret</span>, <span class="mono">bidderPrequalPath</span> (depth-5 Merkle proof), <span class="mono">BidOpening</span> (price, surety bond, firmIdHash, CA §4101 subListHash, bidSalt).</li>
+              <li><strong>WebCrypto E2E Envelopes:</strong> Ephemeral per-tender <span class="mono">RSA-OAEP-256 + AES-256-GCM + AAD</span> encrypted openings delivered off-chain to the adjudicator after <span class="mono">closeBidding</span>.</li>
+              <li><strong>Zero Ciphertext On-Chain:</strong> Only canonical <span class="mono">sha256</span> opening receipts are anchored to prevent post-quantum harvest-now-decrypt-later attacks on public ledgers.</li>
+            </ul>
+          </div>
+
+          <div class="sheet sheet-green">
+            <div class="tag tag-green" style="margin-bottom: 10px">Public Ledger Layer (Midnight Compact 0.36.1)</div>
+            <ul class="clean">
+              <li><strong>Immutable Parameters:</strong> <span class="mono">tenderId</span>, <span class="mono">prequalRoot</span>, <span class="mono">maxAwardBudget</span>, <span class="mono">minBondBps</span> (10% statutory surety bond).</li>
+              <li><strong>Frozen Completeness Root:</strong> Rolling SHA-256 commitment chain frozen permissionlessly at <span class="mono">closeBidding</span> (<span class="mono">frozenBidCount</span> + <span class="mono">frozenCommitRoot</span>).</li>
+              <li><strong>Auditable Disposition:</strong> Public <span class="mono">awardedPrice</span>, <span class="mono">winnerFirmIdHash</span>, <span class="mono">winnerSubListHash</span>, explicit reason-coded <span class="mono">exclusionCodes[0..3]</span>, and <span class="mono">exclusionEvidence[0..3]</span>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">contracts/src/assize.compact · packages/crypto/index.ts · 0 losing prices ever serialized on-chain</span>
+        <span class="mono">04 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: 8-CIRCUIT STATE MACHINE -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">04 · Complete 8-Circuit Lifecycle</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Compact 0.36.1 · Ledger 9</span>
+      </div>
+
+      <div>
+        <h2>Eight compiled ZK circuits enforce every statutory transition.</h2>
+
+        <div class="sheet" style="margin-top: 18px; padding: 0; overflow: hidden">
+          <table>
+            <thead>
+              <tr>
+                <th>Circuit</th>
+                <th>Phase Transition</th>
+                <th>Zero-Knowledge &amp; Completeness Enforcement</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">submitSealedBid</td>
+                <td class="mono">OPEN -&gt; OPEN</td>
+                <td>Proves depth-5 <span class="mono">prequalRoot</span> Merkle membership, unique nullifier, <span class="mono">price &gt; 0</span>, and <span class="mono">bondAmount &ge; 10%</span> without revealing bidder identity or price.</td>
+              </tr>
+              <tr>
+                <td class="mono">closeBidding</td>
+                <td class="mono">OPEN -&gt; REVEAL</td>
+                <td>Permissionless freeze of <span class="mono">frozenBidCount</span> &amp; <span class="mono">frozenCommitRoot</span> (or <span class="mono">CANCELLED_NO_BIDS</span> if 0 bids).</td>
+              </tr>
+              <tr>
+                <td class="mono">deliverOpening</td>
+                <td class="mono">REVEAL -&gt; REVEAL</td>
+                <td>Proves bidder owns commitment preimage &amp; anchors off-chain WebCrypto envelope <span class="mono">sha256</span> receipt on-chain.</td>
+              </tr>
+              <tr>
+                <td class="mono">closeReveal</td>
+                <td class="mono">REVEAL -&gt; EVALUATION</td>
+                <td>Locks reveal window cleanly before adjudication, preventing early-cutoff races.</td>
+              </tr>
+              <tr>
+                <td class="mono">proveAward</td>
+                <td class="mono">EVALUATION -&gt; AWARDED / NO_AWARD</td>
+                <td>Consumes <strong>all N=4 frozen slots</strong>: blocks silent omission, enforces deterministic lowest compliant bidder + tie-break, proves <span class="mono">OVER_BUDGET</span>, blocks fake <span class="mono">NON_REVEAL</span>.</td>
+              </tr>
+              <tr>
+                <td class="mono">challengeAward</td>
+                <td class="mono">AWARDED -&gt; CONTESTED</td>
+                <td>Discretionarily excluded receipted bidder proves <span class="mono">myPrice &lt; awardedPrice</span> in ZK <strong>without disclosing their price</strong>.</td>
+              </tr>
+              <tr>
+                <td class="mono">finalizeAward / declareAdjudicatorDefault</td>
+                <td class="mono">AWARDED -&gt; FINALIZED<br />EVALUATION -&gt; DEFAULT</td>
+                <td>Locks uncontested awards permanently, or records permissionless adjudicator default if evaluation stalls.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">N=4 baseline verified (180 MB proveAward prover key); N=6 expansion gated strictly on Preprod proving</span>
+        <span class="mono">05 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: MAGIC MOMENT -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">05 · Anti-Rigging Payoff</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">3 Attacks Blocked + 1 ZK Protest</span>
+      </div>
+
+      <div>
+        <h2>Every rigging vector is either mathematically impossible or cryptographically caught.</h2>
+
+        <div class="grid-3" style="margin-top: 20px">
+          <div class="sheet sheet-crimson">
+            <div class="tag tag-crimson" style="margin-bottom: 8px">Attack 1 · Rejected</div>
+            <div style="font-weight: 600; margin-bottom: 6px">Silent Omission</div>
+            <p style="font-size: 13px; color: #4e5863; margin: 0 0 10px">
+              Adjudicator tries marking Slot #1 ($885k) as <span class="mono">NO_BID</span> to award $940k.
+            </p>
+            <div class="mono" style="font-size: 11.5px; color: #991b1b">
+              assert failed: Submitted slot cannot be NO_BID
+            </div>
+          </div>
+
+          <div class="sheet sheet-crimson">
+            <div class="tag tag-crimson" style="margin-bottom: 8px">Attack 2 · Rejected</div>
+            <div style="font-weight: 600; margin-bottom: 6px">Wrong Winner (Argmin)</div>
+            <p style="font-size: 13px; color: #4e5863; margin: 0 0 10px">
+              Adjudicator includes all 4 bids but awards Slot #0 ($940k) over Slot #1 ($885k).
+            </p>
+            <div class="mono" style="font-size: 11.5px; color: #991b1b">
+              assert failed: Awarded price is not deterministic lowest
+            </div>
+          </div>
+
+          <div class="sheet sheet-crimson">
+            <div class="tag tag-crimson" style="margin-bottom: 8px">Attack 3 · Rejected</div>
+            <div style="font-weight: 600; margin-bottom: 6px">Fake NON_REVEAL</div>
+            <p style="font-size: 13px; color: #4e5863; margin: 0 0 10px">
+              Adjudicator tries claiming receipted Slot #1 failed to reveal its opening.
+            </p>
+            <div class="mono" style="font-size: 11.5px; color: #991b1b">
+              assert failed: Cannot mark receipted opening as NON_REVEAL
+            </div>
+          </div>
+        </div>
+
+        <div class="sheet sheet-navy" style="margin-top: 20px">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+            <span class="tag tag-navy">The Last Loophole: Pretextual Exclusion -&gt; Caught by ZK Protest</span>
+            <span class="tag tag-crimson">CONTESTED · $885k SEALED</span>
+          </div>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #2f3842">
+            When a corrupt official marks Slot #1 <span class="mono">NOT_RESPONSIBLE</span> with a public evidence hash and awards
+            Slot #0 ($940,000), Slot #1 executes <span class="mono">challengeAward</span>: proving pre-deadline commitment,
+            on-chain receipt, and <span class="mono">myPrice &lt; $940,000</span> in zero knowledge. The ledger flips permanently to
+            <strong style="color: #991b1b">CONTESTED</strong>—preserving administrative due process (<em>City of Inglewood</em>)
+            without ever exposing Slot #1's $885,000 cost structure to competitors.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">Interactive 45-second walkthrough live in Assize Tender Room (/tender)</span>
+        <span class="mono">06 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: LIVE PRODUCT ARTIFACT -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">06 · Live Product Artifact</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Archival Civic Bid-Tabulation UI</span>
+      </div>
+
+      <div class="split-7-5" style="align-items: center">
+        <div class="screenshot-frame">
+          <img src="assets/certificate-contested.png" alt="Assize Official Sealed-Bid Adjudication Certificate (CONTESTED)" />
+        </div>
+        <div>
+          <h2 style="font-size: 28px">Built for procurement officers, auditors, and judges—not crypto degens.</h2>
+          <ul class="clean" style="margin-top: 14px">
+            <li><strong>Overview (<span class="mono">/</span>):</strong> Plain-language Privacy Boundary matrix + Midnight Dual-Ledger architecture.</li>
+            <li><strong>Tender Room (<span class="mono">/tender</span>):</strong> Real compiled Compact 0.36.1 circuit execution + real WebCrypto envelopes + 1-click adversarial rigging harness + live Ledger Inspector.</li>
+            <li><strong>Live Preprod Verifier (<span class="mono">/verify</span>):</strong> Walletless Blockfrost Midnight Preprod GraphQL query client + <span class="mono">npm run verify:onchain</span> CLI.</li>
+            <li><strong>Award Certificate (<span class="mono">/verify/award</span>):</strong> Print/PDF-ready municipal record proving zero losing prices on-chain.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">Real rendered capture from Assize production build · 0 console errors</span>
+        <span class="mono">07 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: ENGINEERING PROOF -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">07 · Engineering Rigor &amp; Verification</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Zero Mock Shortcuts</span>
+      </div>
+
+      <div>
+        <h2>Verified from Compact compiler output down to source-level guard mutations.</h2>
+
+        <div class="grid-4" style="margin-top: 20px">
+          <div class="sheet">
+            <div class="metric">8 / 16</div>
+            <div class="metric-label"><strong>Compiled ZKIR circuits</strong> &amp; generated <span class="mono">.prover</span>/<span class="mono">.verifier</span> keys (<span class="mono">compact 0.36.1</span>)</div>
+          </div>
+          <div class="sheet">
+            <div class="metric" style="color: #166534">104 / 104</div>
+            <div class="metric-label"><strong>Passing Vitest tests</strong> (lifecycle, WebCrypto tamper, 40 guard boundaries, 50 fuzz trials)</div>
+          </div>
+          <div class="sheet">
+            <div class="metric" style="color: #166534">26</div>
+            <div class="metric-label"><strong>Source guard mutants</strong> testing every Compact assertion against silent removal</div>
+          </div>
+          <div class="sheet">
+            <div class="metric">0</div>
+            <div class="metric-label"><strong>Losing bid prices</strong> present in serialized on-chain ledger state (automated byte audit)</div>
+          </div>
+        </div>
+
+        <div class="sheet" style="margin-top: 20px">
+          <div class="kicker" style="margin-bottom: 8px">Honest Execution &amp; Deployment Discipline</div>
+          <p style="margin: 0; font-size: 13.5px; color: #4e5863; line-height: 1.6">
+            Assize enforces strict separation between <strong>local compiled runtime execution</strong> (clearly labeled in the Tender Room for walletless judge evaluation) and <strong>live Midnight Preprod state</strong> (queried directly via Blockfrost's <span class="mono">https://midnight-preprod.blockfrost.io/api/v0</span> GraphQL indexer and reproducible via <span class="mono">.github/workflows/deploy-preprod.yml</span> + <span class="mono">midnightntwrk/proof-server</span>). Zero fabricated tx hashes; zero <span class="mono">setTimeout</span> simulations.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">PRIVACY_AUDIT.md · docs/JUDGE_GUIDE.md · contracts/test/assize.test.ts · contracts/test/mutations.ts</span>
+        <span class="mono">08 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: COMMERCIAL VIABILITY & GTM -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">08 · Commercial Viability &amp; Legal Fit</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Path to Municipal Adoption</span>
+      </div>
+
+      <div>
+        <h2>Deploy as a cryptographic integrity overlay—not a rip-and-replace portal.</h2>
+
+        <div class="grid-2" style="margin-top: 20px">
+          <div class="sheet sheet-navy">
+            <div class="tag tag-navy" style="margin-bottom: 10px">Go-To-Market &amp; Revenue Model</div>
+            <ul class="clean">
+              <li><strong>Overlay Architecture:</strong> Plugs alongside existing municipal e-procurement systems (PlanetBids, Bonfire, OpenGov) as an immutable commitment, receipt, and ZK adjudication layer.</li>
+              <li><strong>Target Beachhead:</strong> County public-works departments, transit authorities, and school districts running $500k–$50M sealed-bid construction tenders where protest litigation costs $50k–$250k per dispute.</li>
+              <li><strong>Pricing:</strong> $1,500–$3,500/month SaaS per agency (unlimited tenders) or $250 per certified archival Adjudication Certificate, bundled with Midnight DUST sponsorship.</li>
+            </ul>
+          </div>
+
+          <div class="sheet">
+            <div class="tag tag-green" style="margin-bottom: 10px">Verified Statutory Alignment</div>
+            <ul class="clean">
+              <li><strong>CA PCC §§ 10180, 20128, 20162:</strong> Objective lowest responsible &amp; responsive bidder rule with deterministic tie-break encoded directly in <span class="mono">proveAward</span>.</li>
+              <li><strong>CA PCC § 4101 (Sublisting Act):</strong> Winner's subcontractor roster hash (<span class="mono">winnerSubListHash</span>) locked pre-deadline to prevent post-award bid shopping.</li>
+              <li><strong><em>City of Inglewood</em> (7 Cal.3d 861):</strong> Discretionary <span class="mono">NOT_RESPONSIBLE</span> findings require public evidence hashes and trigger formal <span class="mono">CONTESTED</span> due-process hearings.</li>
+              <li><strong>EU Dir. 2014/24/EU Art. 21:</strong> Protects unsuccessful tenderers' confidential trade secrets permanently.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">docs/LEGAL_POSITIONING.md · Designed for public procurement buyers &amp; municipal auditors</span>
+        <span class="mono">09 / 10</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: ROADMAP & CLOSING -->
+    <section class="slide">
+      <div class="header-bar">
+        <span class="kicker" style="margin: 0">09 · Phase 2 Roadmap</span>
+        <span class="mono" style="font-size: 12px; color: #6c7682">Closing &amp; Next Milestones</span>
+      </div>
+
+      <div class="grid-3" style="margin-top: 12px">
+        <div class="sheet sheet-green">
+          <div class="tag tag-green" style="margin-bottom: 8px">Wave 3 · Delivered</div>
+          <div style="font-weight: 600; margin-bottom: 6px">Core Protocol &amp; Proof Engine</div>
+          <ul class="clean" style="font-size: 12.5px">
+            <li>8-circuit Compact 0.36.1 contract (<span class="mono">N=4</span>) + 16 prover/verifier keys</li>
+            <li>WebCrypto RSA-OAEP + AES-GCM off-chain openings</li>
+            <li>104 automated tests + 26-mutant guard harness</li>
+            <li>Walletless Tender Room, Blockfrost Preprod Verifier &amp; Award Certificate</li>
+          </ul>
+        </div>
+
+        <div class="sheet sheet-navy">
+          <div class="tag tag-navy" style="margin-bottom: 8px">Phase 2 · Near-Term</div>
+          <div style="font-weight: 600; margin-bottom: 6px">Timelock &amp; Scale Expansion</div>
+          <ul class="clean" style="font-size: 12.5px">
+            <li><strong>Timelock Encryption (drand / threshold):</strong> Eliminates bidder non-reveal dependency cleanly</li>
+            <li><strong>Circuit Expansion:</strong> Scale <span class="mono">N=4 -&gt; N=6+</span> and batched Merkle-chunked adjudication after Preprod proving benchmarks</li>
+            <li><strong>Lace Wallet &amp; Hardware Keys:</strong> Agency HSM signing for adjudicator keys</li>
+          </ul>
+        </div>
+
+        <div class="sheet">
+          <div class="tag tag-private" style="margin-bottom: 8px">Phase 3 · Ecosystem</div>
+          <div style="font-weight: 600; margin-bottom: 6px">Municipal Portal Integrations</div>
+          <ul class="clean" style="font-size: 12.5px">
+            <li>Connector webhooks for PlanetBids / OpenGov / Bonfire</li>
+            <li>Multi-criteria weighted scoring circuits (Best-Value RFP)</li>
+            <li>State Auditor read-only verification dashboards</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sheet sheet-navy" style="margin-top: 22px; display: flex; justify-content: space-between; align-items: center">
+        <div>
+          <div class="serif" style="font-size: 26px; font-weight: 700">Assize</div>
+          <div style="font-size: 14px; color: #4e5863">
+            Verifiable sealed-bid public procurement, built natively for Midnight.
+          </div>
+        </div>
+        <div class="mono" style="text-align: right; font-size: 12px; color: #1b3b6f">
+          Apache-2.0 · Topic: midnightntwrk<br />
+          Compact 0.36.1 · Ledger 9
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span class="mono">ASSIZE · BUILD PRIVACY-FIRST APPS ON MIDNIGHT — WAVE 3</span>
+        <span class="mono">10 / 10</span>
+      </div>
+    </section>
+  </body>
+</html>

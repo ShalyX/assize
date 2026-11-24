@@ -1,0 +1,16 @@
+{
+  "name": "assize",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Assize — Verifiable sealed-bid public-works procurement adjudication on Midnight (Compact 0.36.1)",
+  "scripts": {
+    "test:contracts": "npm --prefix contracts test",
+    "test:mutations": "npm --prefix contracts run test:mutations",
+    "build:web": "npm --prefix web run build",
+    "dev:web": "npm --prefix web run dev",
+    "preview:web": "npm --prefix web run preview",
+    "verify:onchain": "node scripts/verify-onchain.mjs",
+    "deploy:preprod": "node scripts/deploy-preprod.mjs"
+  }
+}

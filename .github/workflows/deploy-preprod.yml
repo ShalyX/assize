@@ -1,0 +1,58 @@
+name: Deploy Assize to Midnight Preprod
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Tender scenario to deploy (both, finalized, contested)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - finalized
+          - contested
+
+jobs:
+  deploy-preprod:
+    runs-on: ubuntu-latest
+    services:
+      proof-server:
+        image: midnightntwrk/proof-server:latest
+        ports:
+          - 6300:6300
+        options: >-
+          --health-cmd "curl -f http://localhost:6300/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install contract dependencies
+        working-directory: contracts
+        run: npm ci
+
+      - name: Install Compact 0.36.1 toolchain and generate ZK keys
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          compact update 0.36.1
+          compact compile contracts/src/assize.compact contracts/managed/assize
+
+      - name: Run 104-test Compact 0.36.1 contract suite
+        working-directory: contracts
+        run: npm test
+
+      - name: Run Preprod preflight check (requires funded wallet + Blockfrost key)
+        env:
+          BLOCKFROST_PROJECT_ID: ${{ secrets.BLOCKFROST_PROJECT_ID }}
+          MIDNIGHT_SEED: ${{ secrets.MIDNIGHT_SEED }}
+          MIDNIGHT_PROOF_SERVER_URL: http://127.0.0.1:6300
+        run: npm run deploy:preprod

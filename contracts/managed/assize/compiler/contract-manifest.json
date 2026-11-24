@@ -1,0 +1,76 @@
+{
+  "manifest-version": "1",
+  "compiler-version": "0.36.1",
+  "compiler-commit": "7fa3a117c5e7efe9d2c51da04263e5f0b3509144",
+  "language-version": "0.28.0",
+  "runtime-version": "0.21.0",
+  "compiler": {
+    "type": "directory",
+    "contract-info.json": {
+      "type": "file",
+      "size": 15442,
+      "hash": "193b458642968c3538af10344600c7c12ddad7be44f9bf29669dc2f9a255a5b1"
+    }
+  },
+  "contract": {
+    "type": "directory",
+    "index.d.ts": {
+      "type": "file",
+      "size": 9335,
+      "hash": "c27a2ab710880b3a5580ff43504b943158f6e5b7d012bad9e7ebabb5c40edb6c"
+    },
+    "index.js": {
+      "type": "file",
+      "size": 394070,
+      "hash": "f441587cbb6f1a30ca977fabde8839aab6f575d4e1bb82c331be5bec3a56e2d3"
+    },
+    "index.js.map": {
+      "type": "file",
+      "size": 12247,
+      "hash": "1d8e75ea7783c63d47efbc551385ed8c74f66ea2bcd791a18de637e9673afcb9"
+    }
+  },
+  "zkir": {
+    "type": "directory",
+    "challengeAward.zkir": {
+      "type": "file",
+      "size": 12211,
+      "hash": "d6d70b44c3f080e025202b5292cb6c35ecacc23ffb71a8027df90af84e839b09"
+    },
+    "closeBidding.zkir": {
+      "type": "file",
+      "size": 3499,
+      "hash": "ac50bd63da95c8b3fb7e55eb064e80a7c71f53562f00a4cd345d5634988a8946"
+    },
+    "closeReveal.zkir": {
+      "type": "file",
+      "size": 996,
+      "hash": "d1d0a8ab77b8f6c42f0ab6e9ab4f791e306d2ad077f7eac2a24e1a406dd24220"
+    },
+    "declareAdjudicatorDefault.zkir": {
+      "type": "file",
+      "size": 996,
+      "hash": "d856d873eacfad521c5caf6db026764992a247d70dba32c397820a990e58341c"
+    },
+    "deliverOpening.zkir": {
+      "type": "file",
+      "size": 8815,
+      "hash": "e853cad70c678a90da777d9b0588f8aae24c6ba1cfed5dfdb446ab9ca96b94e9"
+    },
+    "finalizeAward.zkir": {
+      "type": "file",
+      "size": 2401,
+      "hash": "fa8303455ce568f111d02beb75da8e9937abaf9483d17c360d5f8e7ece0b64fe"
+    },
+    "proveAward.zkir": {
+      "type": "file",
+      "size": 77756,
+      "hash": "ebf4cece37809b7375aca149c2607b3cecd64156885b3242a000e49064bc0c10"
+    },
+    "submitSealedBid.zkir": {
+      "type": "file",
+      "size": 17493,
+      "hash": "c22fbec5f8672290e3132eec7e4e3c9542ce20c9999848b9c5fbf9334f32d113"
+    }
+  }
+}

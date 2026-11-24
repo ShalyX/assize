@@ -1,0 +1,32 @@
+{
+  "schema": "ASSIZE-PREPROD-MANIFEST-V1",
+  "network": "preprod",
+  "compactVersion": "0.36.1",
+  "runtimeVersion": "0.21.0",
+  "endpoints": {
+    "indexerGraphql": "https://midnight-preprod.blockfrost.io/api/v0",
+    "indexerWs": "wss://midnight-preprod.blockfrost.io/api/v0/ws",
+    "nodeRpc": "https://rpc.midnight-preprod.blockfrost.io",
+    "proofServerLocal": "http://127.0.0.1:6300"
+  },
+  "status": "AWAITING_FUNDED_PREPROD_DEPLOYMENT",
+  "note": "Assize never fabricates transaction hashes or simulates on-chain deployments. Populate via `npm run deploy:preprod` or `.github/workflows/deploy-preprod.yml` with a funded Preprod wallet (tNIGHT -> DUST) and BLOCKFROST_PROJECT_ID.",
+  "deployments": [
+    {
+      "label": "Tender A — Clean Fair Award (FINALIZED)",
+      "tenderCode": "PW-2026-041-A",
+      "expectedOutcome": "FINALIZED",
+      "contractAddress": null,
+      "deployedAt": null,
+      "transactions": []
+    },
+    {
+      "label": "Tender B — Pretextual Exclusion Caught (CONTESTED)",
+      "tenderCode": "PW-2026-041-B",
+      "expectedOutcome": "CONTESTED",
+      "contractAddress": null,
+      "deployedAt": null,
+      "transactions": []
+    }
+  ]
+}

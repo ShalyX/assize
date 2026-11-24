@@ -1,0 +1,458 @@
+// SPDX-License-Identifier: Apache-2.0
+// Assize — Verifiable Sealed-Bid Public Procurement on Midnight (N=4 Baseline)
+// Statutory grounding: CA PCC §§ 10180, 20128, 20162 (lowest responsible & responsive bidder),
+// CA PCC § 4101 (bid-shopping precedent via subListHash), City of Inglewood (1972) due-process
+// challengeable exclusions, EU Directive 2014/24/EU Art. 21.
+
+pragma language_version >= 0.28.0;
+
+import CompactStandardLibrary;
+
+export enum Phase {
+  OPEN,
+  REVEAL,
+  EVALUATION,
+  AWARDED,
+  NO_AWARD,
+  CONTESTED,
+  FINALIZED,
+  CANCELLED_NO_BIDS,
+  ADJUDICATOR_DEFAULT
+}
+
+export enum ExclusionCode {
+  NONE,
+  NO_BID,
+  NON_REVEAL,
+  UNDECRYPTABLE,
+  OVER_BUDGET,
+  BOND_DEFECT,
+  NON_RESPONSIVE,
+  NOT_RESPONSIBLE
+}
+
+export struct BidOpening {
+  nullifier: Bytes<32>,
+  price: Uint<64>,
+  bondAmount: Uint<64>,
+  firmIdHash: Bytes<32>,
+  subListHash: Bytes<32>,
+  bidDocsHash: Bytes<32>,
+  bidSalt: Bytes<32>
+}
+
+// ─── Immutable Tender Configuration (Public On-Chain) ────────────────────────
+export ledger tenderId: Bytes<32>;
+export ledger adjudicatorPubKey: Bytes<32>;
+export ledger adjudicatorEncPubKey: Bytes<32>;
+export ledger prequalRoot: MerkleTreeDigest;
+export ledger prequalRosterHash: Bytes<32>;
+export ledger selectionRuleHash: Bytes<32>;
+export ledger maxAwardBudget: Uint<64>;
+export ledger minBondBps: Uint<16>;
+
+// ─── Lifecycle State (ZERO losing prices, ZERO salts, ZERO losing identities) ─
+export ledger phase: Phase;
+export ledger bidCount: Uint<8>;
+export ledger rollingCommitRoot: Bytes<32>;
+export ledger frozenBidCount: Uint<8>;
+export ledger frozenCommitRoot: Bytes<32>;
+export ledger bidCommitments: Map<Uint<8>, Bytes<32>>;
+export ledger usedNullifiers: Set<Bytes<32>>;
+export ledger openingReceipts: Map<Uint<8>, Bytes<32>>;
+export ledger deliveredFlags: Map<Uint<8>, Boolean>;
+
+// ─── Public Award, Exclusion & Protest State ─────────────────────────────────
+export ledger hasWinner: Boolean;
+export ledger winningSlot: Uint<8>;
+export ledger awardedPrice: Uint<64>;
+export ledger winnerCommitment: Bytes<32>;
+export ledger winnerFirmIdHash: Bytes<32>;
+export ledger winnerSubListHash: Bytes<32>;
+export ledger exclusionCodes: Map<Uint<8>, ExclusionCode>;
+export ledger exclusionEvidence: Map<Uint<8>, Bytes<32>>;
+export ledger nonRevealCount: Uint<8>;
+export ledger challengerSlot: Uint<8>;
+export ledger challengerCommitment: Bytes<32>;
+
+// ─── Private Witnesses (Local Prover Only — NEVER Disclosed on Chain) ────────
+witness bidderSecret(): Bytes<32>;
+witness bidderPrequalPath(): MerkleTreePath<5, Bytes<32>>;
+witness bidderOpening(): BidOpening;
+witness adjudicatorSecret(): Bytes<32>;
+witness adjudicatorOpenings(): Vector<4, BidOpening>;
+
+// ─── Domain-Separated Pure Helper Circuits ───────────────────────────────────
+circuit hashBidderPubKey(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "ASSIZE_BIDDER_PK_V1"), secret]);
+}
+
+circuit hashAdjPubKey(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "ASSIZE_ADJ_PK_V1"), secret]);
+}
+
+circuit hashPrequalLeaf(tId: Bytes<32>, bidderPk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "ASSIZE_PREQUAL_V1"), tId, bidderPk]);
+}
+
+circuit hashNullifier(tId: Bytes<32>, secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "ASSIZE_NULLIFIER_V1"), tId, secret]);
+}
+
+circuit hashBidCommit(tId: Bytes<32>, op: BidOpening): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([
+    pad(32, "ASSIZE_BID_COMMIT_V1"),
+    tId,
+    persistentHash<BidOpening>(op)
+  ]);
+}
+
+circuit foldCommitRoot(prev: Bytes<32>, slot: Uint<8>, commit: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([
+    pad(32, "ASSIZE_ROLL_V1"),
+    prev,
+    persistentHash<Vector<2, Bytes<32>>>([
+      commit,
+      persistentHash<Uint<8>>(slot)
+    ])
+  ]);
+}
+
+circuit isDiscretionaryExclusion(code: ExclusionCode): Boolean {
+  return code == ExclusionCode.UNDECRYPTABLE ||
+    code == ExclusionCode.BOND_DEFECT ||
+    code == ExclusionCode.NON_RESPONSIVE ||
+    code == ExclusionCode.NOT_RESPONSIBLE;
+}
+
+// ─── 1. Constructor ──────────────────────────────────────────────────────────
+constructor(
+  initTenderId: Bytes<32>,
+  initAdjPubKey: Bytes<32>,
+  initAdjEncPubKey: Bytes<32>,
+  initPrequalRoot: MerkleTreeDigest,
+  initPrequalRosterHash: Bytes<32>,
+  initSelectionRuleHash: Bytes<32>,
+  initMaxAwardBudget: Uint<64>,
+  initMinBondBps: Uint<16>
+) {
+  assert(initMinBondBps <= 10000, "minBondBps cannot exceed 10000");
+  tenderId = disclose(initTenderId);
+  adjudicatorPubKey = disclose(initAdjPubKey);
+  adjudicatorEncPubKey = disclose(initAdjEncPubKey);
+  prequalRoot = disclose(initPrequalRoot);
+  prequalRosterHash = disclose(initPrequalRosterHash);
+  selectionRuleHash = disclose(initSelectionRuleHash);
+  maxAwardBudget = disclose(initMaxAwardBudget);
+  minBondBps = disclose(initMinBondBps);
+
+  phase = Phase.OPEN;
+  bidCount = 0;
+  rollingCommitRoot = persistentHash<Vector<2, Bytes<32>>>([
+    pad(32, "ASSIZE_ROLL_INIT_V1"),
+    disclose(initTenderId)
+  ]);
+  frozenBidCount = 0;
+  frozenCommitRoot = pad(32, "");
+  hasWinner = false;
+  winningSlot = 0;
+  awardedPrice = 0;
+  winnerCommitment = pad(32, "");
+  winnerFirmIdHash = pad(32, "");
+  winnerSubListHash = pad(32, "");
+  nonRevealCount = 0;
+  challengerSlot = 0;
+  challengerCommitment = pad(32, "");
+
+  const zero32 = pad(32, "");
+  for (const s of [0, 1, 2, 3]) {
+    const slot = s as Uint<8>;
+    bidCommitments.insert(slot, zero32);
+    openingReceipts.insert(slot, zero32);
+    deliveredFlags.insert(slot, false);
+    exclusionCodes.insert(slot, ExclusionCode.NONE);
+    exclusionEvidence.insert(slot, zero32);
+  }
+}
+
+// ─── 2. Submit Sealed Bid (OPEN) ─────────────────────────────────────────────
+export circuit submitSealedBid(): Uint<8> {
+  assert(phase == Phase.OPEN, "Bidding is not open");
+  assert(bidCount < 4, "Maximum sealed bid slots (N=4) reached");
+
+  const secret = bidderSecret();
+  const path = bidderPrequalPath();
+  const op = bidderOpening();
+
+  const bidderPk = hashBidderPubKey(secret);
+  const expectedLeaf = hashPrequalLeaf(tenderId, bidderPk);
+  assert(path.leaf == expectedLeaf, "Prequalification leaf mismatch");
+  assert(
+    merkleTreePathRoot<5, Bytes<32>>(path) == prequalRoot,
+    "Bidder is not in immutable prequalification roster"
+  );
+
+  const nul = hashNullifier(tenderId, secret);
+  assert(op.nullifier == nul, "Opening nullifier mismatch");
+  assert(!usedNullifiers.member(disclose(nul)), "Bidder already submitted a sealed bid");
+
+  // Objective financial bounds (prevent zero-price & multiplication overflow)
+  assert(op.price > 0, "Bid price must be positive");
+  assert(op.price <= 100000000000000, "Bid price exceeds 64-bit safe cap");
+  assert(op.bondAmount <= 100000000000000, "Bond amount exceeds 64-bit safe cap");
+  assert(
+    op.bondAmount * 10000 >= op.price * (minBondBps as Uint<64>),
+    "Surety bond does not meet statutory minimum ratio"
+  );
+
+  const commit = disclose(hashBidCommit(tenderId, op));
+  const slot = bidCount;
+
+  bidCommitments.insert(slot, commit);
+  usedNullifiers.insert(disclose(nul));
+  rollingCommitRoot = foldCommitRoot(rollingCommitRoot, slot, commit);
+  bidCount = (slot + 1) as Uint<8>;
+
+  return slot;
+}
+
+// ─── 3. Close Bidding (Permissionless Freeze) ────────────────────────────────
+export circuit closeBidding(): [] {
+  assert(phase == Phase.OPEN, "Bidding is not open");
+  frozenBidCount = bidCount;
+  frozenCommitRoot = rollingCommitRoot;
+  if (bidCount == 0) {
+    phase = Phase.CANCELLED_NO_BIDS;
+  } else {
+    phase = Phase.REVEAL;
+  }
+}
+
+// ─── 4. Deliver Encrypted Opening Receipt (REVEAL) ───────────────────────────
+export circuit deliverOpening(slotIndex: Uint<8>, envelopeHash: Bytes<32>): [] {
+  const slot = disclose(slotIndex);
+  const envHash = disclose(envelopeHash);
+  assert(phase == Phase.REVEAL, "Reveal window is not active");
+  assert(slot < frozenBidCount, "Invalid bid slot");
+  assert(!deliveredFlags.lookup(slot), "Opening receipt already recorded");
+
+  const secret = bidderSecret();
+  const op = bidderOpening();
+  const nul = hashNullifier(tenderId, secret);
+  assert(op.nullifier == nul, "Not the owner of this bid");
+
+  const recomputed = hashBidCommit(tenderId, op);
+  assert(recomputed == bidCommitments.lookup(slot), "Opening does not match sealed commitment");
+
+  openingReceipts.insert(slot, envHash);
+  deliveredFlags.insert(slot, true);
+}
+
+// ─── 5. Close Reveal Barrier (Prevents Adjudicator Early-Cutoff Race) ────────
+export circuit closeReveal(): [] {
+  assert(phase == Phase.REVEAL, "Reveal window is not active");
+  phase = Phase.EVALUATION;
+}
+
+circuit verifyWinnerOpening(
+  op: BidOpening,
+  code: ExclusionCode,
+  awardedPricePub: Uint<64>,
+  winnerFirmPub: Bytes<32>,
+  winnerSubListPub: Bytes<32>
+): [] {
+  assert(code == ExclusionCode.NONE, "Winning slot cannot be excluded");
+  assert(op.price == awardedPricePub, "Awarded price mismatch");
+  assert(op.firmIdHash == winnerFirmPub, "Winner firm ID hash mismatch");
+  assert(op.subListHash == winnerSubListPub, "Winner subListHash mismatch");
+}
+
+circuit evalAwardSlot(
+  prevAcc: Bytes<32>,
+  idx: Uint<8>,
+  code: ExclusionCode,
+  ev: Bytes<32>,
+  op: BidOpening,
+  hasWinnerPub: Boolean,
+  winningSlotPub: Uint<8>,
+  awardedPricePub: Uint<64>,
+  pubMaxBudget: Uint<64>
+): [Bytes<32>, Uint<8>] {
+  exclusionCodes.insert(idx, code);
+  exclusionEvidence.insert(idx, ev);
+
+  if (idx >= frozenBidCount) {
+    assert(code == ExclusionCode.NO_BID, "Unused slot must be NO_BID");
+    return [prevAcc, 0 as Uint<8>];
+  } else {
+    const storedCommit = bidCommitments.lookup(idx);
+    const wasDelivered = deliveredFlags.lookup(idx);
+    const nextAcc = foldCommitRoot(prevAcc, idx, storedCommit);
+
+    assert(code != ExclusionCode.NO_BID, "Submitted slot cannot be NO_BID");
+
+    if (code == ExclusionCode.NONE) {
+      assert(wasDelivered, "Evaluated bid must have an on-chain opening receipt");
+      assert(hasWinnerPub, "Valid compliant bid exists; cannot declare NO_AWARD");
+      assert(
+        hashBidCommit(tenderId, op) == storedCommit,
+        "Adjudicator opening does not match sealed commitment"
+      );
+      if (pubMaxBudget > 0) {
+        assert(op.price <= pubMaxBudget, "Compliant bid cannot exceed maxAwardBudget");
+      }
+      assert(
+        (op.price > awardedPricePub) || ((op.price == awardedPricePub) && (idx >= winningSlotPub)),
+        "Awarded price is not the deterministic lowest compliant bid"
+      );
+      return [nextAcc, 0 as Uint<8>];
+    } else if (code == ExclusionCode.NON_REVEAL) {
+      assert(!wasDelivered, "Cannot mark receipted opening as NON_REVEAL");
+      return [nextAcc, 1 as Uint<8>];
+    } else if (code == ExclusionCode.OVER_BUDGET) {
+      assert(wasDelivered, "OVER_BUDGET requires delivered opening");
+      assert(pubMaxBudget > 0, "OVER_BUDGET requires active maxAwardBudget");
+      assert(
+        hashBidCommit(tenderId, op) == storedCommit,
+        "OVER_BUDGET opening does not match sealed commitment"
+      );
+      assert(op.price > pubMaxBudget, "Bid price does not actually exceed maxAwardBudget");
+      return [nextAcc, 0 as Uint<8>];
+    } else {
+      assert(isDiscretionaryExclusion(code), "Invalid exclusion code");
+      assert(wasDelivered, "Discretionary exclusion requires delivered opening");
+      return [nextAcc, 0 as Uint<8>];
+    }
+  }
+}
+
+// ─── 6. Prove Award Over Complete Frozen Set (EVALUATION -> AWARDED/NO_AWARD) ─
+export circuit proveAward(
+  hasWinnerIn: Boolean,
+  winningSlotIn: Uint<8>,
+  awardedPriceIn: Uint<64>,
+  winnerFirmIn: Bytes<32>,
+  winnerSubListIn: Bytes<32>,
+  codesIn: Vector<4, ExclusionCode>,
+  evidenceIn: Vector<4, Bytes<32>>
+): [] {
+  const hasWinnerPub = disclose(hasWinnerIn);
+  const winningSlotPub = disclose(winningSlotIn);
+  const awardedPricePub = disclose(awardedPriceIn);
+  const winnerFirmPub = disclose(winnerFirmIn);
+  const winnerSubListPub = disclose(winnerSubListIn);
+  const codesPub = disclose(codesIn);
+  const evidencePub = disclose(evidenceIn);
+
+  assert(phase == Phase.EVALUATION, "Tender is not in evaluation phase");
+  assert(
+    hashAdjPubKey(adjudicatorSecret()) == adjudicatorPubKey,
+    "Unauthorized adjudicator"
+  );
+
+  const pubMaxBudget = maxAwardBudget;
+  const openings = adjudicatorOpenings();
+  const initAcc = persistentHash<Vector<2, Bytes<32>>>([
+    pad(32, "ASSIZE_ROLL_INIT_V1"),
+    tenderId
+  ]);
+
+  const r0 = evalAwardSlot(initAcc, 0 as Uint<8>, codesPub[0], evidencePub[0], openings[0], hasWinnerPub, winningSlotPub, awardedPricePub, pubMaxBudget);
+  const r1 = evalAwardSlot(r0[0], 1 as Uint<8>, codesPub[1], evidencePub[1], openings[1], hasWinnerPub, winningSlotPub, awardedPricePub, pubMaxBudget);
+  const r2 = evalAwardSlot(r1[0], 2 as Uint<8>, codesPub[2], evidencePub[2], openings[2], hasWinnerPub, winningSlotPub, awardedPricePub, pubMaxBudget);
+  const r3 = evalAwardSlot(r2[0], 3 as Uint<8>, codesPub[3], evidencePub[3], openings[3], hasWinnerPub, winningSlotPub, awardedPricePub, pubMaxBudget);
+
+  assert(r3[0] == frozenCommitRoot, "Complete-set frozenCommitRoot verification failed");
+  nonRevealCount = (r0[1] + r1[1] + r2[1] + r3[1]) as Uint<8>;
+
+  if (hasWinnerPub) {
+    assert(winningSlotPub < frozenBidCount, "Winning slot out of range");
+    if (winningSlotPub == 0) {
+      verifyWinnerOpening(openings[0], codesPub[0], awardedPricePub, winnerFirmPub, winnerSubListPub);
+    } else if (winningSlotPub == 1) {
+      verifyWinnerOpening(openings[1], codesPub[1], awardedPricePub, winnerFirmPub, winnerSubListPub);
+    } else if (winningSlotPub == 2) {
+      verifyWinnerOpening(openings[2], codesPub[2], awardedPricePub, winnerFirmPub, winnerSubListPub);
+    } else {
+      assert(winningSlotPub == 3, "Winning slot out of N=4 bounds");
+      verifyWinnerOpening(openings[3], codesPub[3], awardedPricePub, winnerFirmPub, winnerSubListPub);
+    }
+    hasWinner = true;
+    winningSlot = winningSlotPub;
+    awardedPrice = awardedPricePub;
+    winnerCommitment = bidCommitments.lookup(winningSlotPub);
+    winnerFirmIdHash = winnerFirmPub;
+    winnerSubListHash = winnerSubListPub;
+    phase = Phase.AWARDED;
+  } else {
+    assert(awardedPricePub == 0, "NO_AWARD must set awardedPrice to 0");
+    hasWinner = false;
+    winningSlot = 0;
+    awardedPrice = 0;
+    winnerCommitment = pad(32, "");
+    winnerFirmIdHash = pad(32, "");
+    winnerSubListHash = pad(32, "");
+    phase = Phase.NO_AWARD;
+  }
+}
+
+// ─── 7. Zero-Knowledge Protest Challenge (AWARDED/NO_AWARD -> CONTESTED) ─────
+// Proves myPrice < awardedPrice (or <= budget on NO_AWARD) WITHOUT disclosing myPrice!
+export circuit challengeAward(slotIndex: Uint<8>): [] {
+  const slot = disclose(slotIndex);
+  const curPhase = phase;
+  const pubMaxBudget = maxAwardBudget;
+  const pubAwardedPrice = awardedPrice;
+  const pubWinningSlot = winningSlot;
+
+  assert(
+    curPhase == Phase.AWARDED || curPhase == Phase.NO_AWARD,
+    "Tender is not open for protest challenges"
+  );
+  assert(slot < frozenBidCount, "Invalid bid slot");
+  assert(deliveredFlags.lookup(slot), "Non-revealing bidder cannot challenge");
+
+  const code = exclusionCodes.lookup(slot);
+  assert(
+    isDiscretionaryExclusion(code),
+    "Only discretionary exclusions are challengeable"
+  );
+
+  const secret = bidderSecret();
+  const op = bidderOpening();
+  const nul = hashNullifier(tenderId, secret);
+  assert(op.nullifier == nul, "Not the owner of this bid slot");
+
+  const storedCommit = bidCommitments.lookup(slot);
+  assert(hashBidCommit(tenderId, op) == storedCommit, "Opening does not match sealed commitment");
+
+  if (pubMaxBudget > 0) {
+    assert(op.price <= pubMaxBudget, "Over-budget bid lacks protest standing");
+  }
+
+  if (curPhase == Phase.AWARDED) {
+    assert(
+      (op.price < pubAwardedPrice) || ((op.price == pubAwardedPrice) && (slot < pubWinningSlot)),
+      "Excluded bid does not beat the awarded bid"
+    );
+  }
+
+  challengerSlot = slot;
+  challengerCommitment = storedCommit;
+  phase = Phase.CONTESTED;
+}
+
+// ─── 8. Finalize Award & Adjudicator Default ─────────────────────────────────
+export circuit finalizeAward(): [] {
+  assert(phase == Phase.AWARDED, "Only uncontested AWARDED tenders can be finalized");
+  assert(
+    hashAdjPubKey(adjudicatorSecret()) == adjudicatorPubKey,
+    "Unauthorized adjudicator"
+  );
+  phase = Phase.FINALIZED;
+}
+
+export circuit declareAdjudicatorDefault(): [] {
+  assert(phase == Phase.EVALUATION, "Can only declare default during evaluation");
+  phase = Phase.ADJUDICATOR_DEFAULT;
+}

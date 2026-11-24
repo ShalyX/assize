@@ -1,0 +1,48 @@
+# Dependencies & build artifacts
+node_modules/
+web/dist/
+*.tsbuildinfo
+
+# Large ZK prover/verifier keys (>100MB; regenerated via `compact compile`)
+contracts/managed/assize/keys/
+contracts/managed/.assize-keys-backup/
+
+# Demo intermediate build files
+demo/clips/
+demo/audio/
+demo/frames/
+demo/scenes/
+demo/synthesize-vo.ps1
+demo/concat.txt
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+
+# Private Hackathon Operator working records (never published)
+.hackathon/
+HACKATHON.md
+COMPETITION_INTELLIGENCE.md
+WINNING_PROFILE.md
+COMPETITION_CONTRACT.md
+PRODUCT.md
+BRAND.md
+DESIGN.md
+LANDING_PAGE.md
+DEMO.md
+DEMO_STORYBOARD.md
+DEMO_PRODUCTION_CHECKLIST.md
+EVIDENCE.md
+HYGIENE.md
+SCORECARD.md
+PROJECT.md
+JUDGE_WALKTHROUGH.md
+PUBLISHING_POLICY.md
+LEARNINGS.md
