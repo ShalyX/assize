@@ -6,6 +6,8 @@ web/dist/
 # Large ZK prover/verifier keys (>100MB; regenerated via `compact compile`)
 contracts/managed/assize/keys/
 contracts/managed/.assize-keys-backup/
+contracts/managed/assize-fast/
+AGENTS.md
 
 # Demo intermediate build files
 demo/clips/
