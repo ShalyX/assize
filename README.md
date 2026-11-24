@@ -8,6 +8,25 @@
 
 ---
 
+## Live Deployments & Verified On-Chain Proof (Midnight Ledger 9)
+
+- **Live Web App (Walletless Tender Room + Live On-Chain Verifier):** https://assize-midnight.vercel.app
+- **Public Repository:** https://github.com/ShalyX/assize (`Apache-2.0` · Topic: `midnightntwrk`)
+- **Live Midnight Preview Contracts (`Compact 0.36.1` · `Midnight.js 5.0.1` · `proof-server:9.0.2` · 26 Real ZK Transactions):**
+
+| Reference Tender | Verified On-Chain Phase | Awarded Price (Public) | Losing Prices On-Chain | Live Contract Address (`Midnight Preview`) | Final Tx Hash & Block |
+|---|---|---:|---|---|---|
+| **Tender A** (`PW-2026-041-A`) — Clean Fair Award | **`FINALIZED`** | `$885,000` (Slot #1) | **0 (Verified)** | `a1e23cade2bf29e29d919a7d51d7db027f63f32276096568eb6b267a8a58a1a9` | [`a8149e18…c4a4f8a`](https://preview.midnightexplorer.com/tx/a8149e1897db26d439f3340684a1e383e5345fec72d76ab93a88b8068c4a4f8a) (`#247446`) |
+| **Tender B** (`PW-2026-041-B`) — Pretextual Exclusion Caught | **`CONTESTED`** | `$940,000` (Slot #0) | **0 (`$885k` sealed!)** | `3baf3aa1d01016d3700b97fd551ff30657e900e0f06f14068ec47cf5a01050f3` | [`73775dcd…0d03aa8`](https://preview.midnightexplorer.com/tx/73775dcd6a6dcbaaa65f0b748b11514b0e087b33edf94a4cc0511ae4d0d03aa8) (`#247502`) |
+
+> **Verify independently in 1 command (zero wallet, zero API key):**
+> ```bash
+> npm run verify:onchain
+> ```
+> Queries `https://indexer.preview.midnight.network/api/v4/graphql` directly for both contracts above and confirms **0 losing bid prices** appear anywhere in serialized on-chain state (full 26-transaction manifest in [deployments/preview.json](./deployments/preview.json)).
+
+---
+
 ## The Problem: The Public-Procurement Privacy Paradox
 
 Public procurement accounts for **12–13% of GDP** across OECD economies, and bid rigging inflates contract prices by **20% or more**. Sealed-bid public works face two opposing failures:

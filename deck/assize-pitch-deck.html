@@ -646,10 +646,12 @@
           </div>
         </div>
 
-        <div class="sheet" style="margin-top: 20px">
-          <div class="kicker" style="margin-bottom: 8px">Honest Execution &amp; Deployment Discipline</div>
-          <p style="margin: 0; font-size: 13.5px; color: #4e5863; line-height: 1.6">
-            Assize enforces strict separation between <strong>local compiled runtime execution</strong> (clearly labeled in the Tender Room for walletless judge evaluation) and <strong>live Midnight Preprod state</strong> (queried directly via Blockfrost's <span class="mono">https://midnight-preprod.blockfrost.io/api/v0</span> GraphQL indexer and reproducible via <span class="mono">.github/workflows/deploy-preprod.yml</span> + <span class="mono">midnightntwrk/proof-server</span>). Zero fabricated tx hashes; zero <span class="mono">setTimeout</span> simulations.
+        <div class="sheet sheet-green" style="margin-top: 20px">
+          <div class="kicker" style="margin-bottom: 8px; color: #166534">Live On-Chain Deployment — Midnight Preview (Ledger 9 · 26 Real ZK Txs)</div>
+          <p style="margin: 0; font-size: 13px; color: #14532d; line-height: 1.6">
+            <strong>Tender A (<span class="mono">FINALIZED</span>, $885,000):</strong> <span class="mono">a1e23cade2bf29e29d919a7d51d7db027f63f32276096568eb6b267a8a58a1a9</span> (13 ZK txs, blocks #247392–#247446)<br />
+            <strong>Tender B (<span class="mono">CONTESTED</span>, $940,000 / $885k hidden):</strong> <span class="mono">3baf3aa1d01016d3700b97fd551ff30657e900e0f06f14068ec47cf5a01050f3</span> (13 ZK txs, blocks #247449–#247502)<br />
+            Live App: <span class="mono">https://assize-midnight.vercel.app</span> · Verify independently via <span class="mono">npm run verify:onchain</span> (0 losing prices in serialized state).
           </p>
         </div>
       </div>

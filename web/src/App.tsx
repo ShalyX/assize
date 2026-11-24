@@ -39,7 +39,7 @@ export function App() {
               <SplitSealLogo size={24} />
               <span className="brand-wordmark">Assize</span>
             </button>
-            <span className="network-pill">Midnight Preprod · Compact 0.36.1</span>
+            <span className="network-pill">Midnight Preview · Compact 0.36.1</span>
           </div>
 
           <nav className="nav-links" aria-label="Primary navigation">
@@ -59,7 +59,7 @@ export function App() {
               className={`nav-btn ${route === 'verify' ? 'active' : ''}`}
               onClick={() => setRoute('verify')}
             >
-              Live Preprod /verify
+              Live On-Chain /verify
             </button>
             <button
               className={`nav-btn ${route === 'certificate' ? 'active' : ''}`}

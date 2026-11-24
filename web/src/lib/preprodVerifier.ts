@@ -1,53 +1,49 @@
 // SPDX-License-Identifier: Apache-2.0
-// Assize — Live Midnight Preprod GraphQL Indexer Verifier Client
-// Queries real Midnight Preprod Indexer state honestly; never fabricates tx hashes.
+// Assize — Live Midnight Preview / Preprod GraphQL Indexer Verifier Client
+// Queries real Midnight GraphQL Indexer state directly with zero trust in the frontend.
 
-export interface PreprodTxRecord {
+import previewManifest from '../generated/preview-manifest.json';
+
+export interface LiveTxRecord {
   step: string;
   circuit: string;
+  txId?: string;
   txHash: string;
-  blockHeight?: number;
+  blockHeight: number;
   note: string;
 }
 
-export interface PreprodDeploymentEntry {
+export interface LiveDeploymentEntry {
   label: string;
   tenderCode: string;
   expectedOutcome: 'FINALIZED' | 'CONTESTED';
-  network: 'preprod' | 'preview';
+  network: 'preview' | 'preprod';
   contractAddress: string | null;
   explorerBaseUrl: string;
   indexerUrl: string;
   deployedAt: string | null;
-  transactions: PreprodTxRecord[];
+  verifiedPhase: string | null;
+  verifiedAwardedPriceCents: string | null;
+  verifiedZeroLosingPricesOnChain: boolean;
+  transactions: LiveTxRecord[];
 }
 
-export const PREPROD_INDEXER_DEFAULT = 'https://midnight-preprod.blockfrost.io/api/v0';
+export const PREPROD_INDEXER_DEFAULT = previewManifest.endpoints.indexerGraphql;
 
-export const PREPROD_MANIFEST: PreprodDeploymentEntry[] = [
-  {
-    label: 'Tender A — Clean Fair Award (FINALIZED)',
-    tenderCode: 'PW-2026-041-A',
-    expectedOutcome: 'FINALIZED',
-    network: 'preprod',
-    contractAddress: null,
-    explorerBaseUrl: 'https://preprod.midnightexplorer.com',
-    indexerUrl: PREPROD_INDEXER_DEFAULT,
-    deployedAt: null,
-    transactions: [],
-  },
-  {
-    label: 'Tender B — Pretextual Exclusion Caught (CONTESTED)',
-    tenderCode: 'PW-2026-041-B',
-    expectedOutcome: 'CONTESTED',
-    network: 'preprod',
-    contractAddress: null,
-    explorerBaseUrl: 'https://preprod.midnightexplorer.com',
-    indexerUrl: PREPROD_INDEXER_DEFAULT,
-    deployedAt: null,
-    transactions: [],
-  },
-];
+export const PREPROD_MANIFEST: LiveDeploymentEntry[] = previewManifest.deployments.map((d) => ({
+  label: d.label,
+  tenderCode: d.tenderCode,
+  expectedOutcome: d.expectedOutcome as 'FINALIZED' | 'CONTESTED',
+  network: 'preview',
+  contractAddress: d.contractAddress,
+  explorerBaseUrl: previewManifest.explorerBaseUrl,
+  indexerUrl: previewManifest.endpoints.indexerGraphql,
+  deployedAt: d.deployedAt,
+  verifiedPhase: d.verifiedPhase,
+  verifiedAwardedPriceCents: d.verifiedAwardedPriceCents,
+  verifiedZeroLosingPricesOnChain: d.verifiedZeroLosingPricesOnChain,
+  transactions: d.transactions,
+}));
 
 export interface IndexerQueryResult {
   ok: boolean;
@@ -56,17 +52,25 @@ export interface IndexerQueryResult {
   checkedAt: string;
   rawStateHex?: string;
   blockHeight?: number;
+  latestTxHash?: string;
+  zeroLosingPricesConfirmed?: boolean;
   error?: string;
 }
 
+function uint32LeHex(val: number): string {
+  const bytes = [val & 0xff, (val >> 8) & 0xff, (val >> 16) & 0xff, (val >> 24) & 0xff];
+  return bytes.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 /**
- * Queries a live Midnight GraphQL Indexer for contractAction(address).
- * Fails cleanly with real network/GraphQL error if unreachable or contract not yet deployed.
+ * Queries Midnight's live GraphQL Indexer for contractAction(address).
+ * Midnight Preview requires no API key; Blockfrost Preprod accepts optional project_id header.
  */
 export async function queryMidnightIndexerContract(
   contractAddress: string,
   indexerUrl: string = PREPROD_INDEXER_DEFAULT,
-  blockfrostProjectId?: string
+  blockfrostProjectId?: string,
+  expectedOutcome?: 'FINALIZED' | 'CONTESTED'
 ): Promise<IndexerQueryResult> {
   const checkedAt = new Date().toISOString();
   const cleanAddr = contractAddress.trim();
@@ -76,7 +80,7 @@ export async function queryMidnightIndexerContract(
       indexerUrl,
       contractAddress: cleanAddr,
       checkedAt,
-      error: 'Enter a valid Midnight Preprod contract address to query the live GraphQL indexer.',
+      error: 'Enter a valid Midnight contract address to query the live GraphQL indexer.',
     };
   }
 
@@ -121,7 +125,7 @@ export async function queryMidnightIndexerContract(
       data?: {
         contractAction?: {
           state?: string;
-          transaction?: { block?: { height?: number } };
+          transaction?: { hash?: string; block?: { height?: number } };
         } | null;
       };
       errors?: { message: string }[];
@@ -145,6 +149,14 @@ export async function queryMidnightIndexerContract(
         error: 'No indexed contract state found at this address on the selected network.',
       };
     }
+
+    const lower = action.state.toLowerCase();
+    const losingPrices =
+      expectedOutcome === 'FINALIZED'
+        ? [94_000_000, 104_000_000, 126_000_000]
+        : [88_500_000, 104_000_000, 126_000_000];
+    const leaked = losingPrices.some((p) => lower.includes(uint32LeHex(p)));
+
     return {
       ok: true,
       indexerUrl,
@@ -152,6 +164,8 @@ export async function queryMidnightIndexerContract(
       checkedAt,
       rawStateHex: action.state,
       blockHeight: action.transaction?.block?.height,
+      latestTxHash: action.transaction?.hash,
+      zeroLosingPricesConfirmed: !leaked,
     };
   } catch (err) {
     return {
