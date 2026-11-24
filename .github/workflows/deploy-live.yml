@@ -28,17 +28,20 @@ jobs:
   deploy-live:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    services:
-      proof-server:
-        image: midnightntwrk/proof-server:9.0.2
-        ports:
-          - 6300:6300
-        options: >-
-          --health-cmd "curl -f http://localhost:6300/health || exit 1"
-          --health-interval 15s
-          --health-timeout 10s
-          --health-retries 40
     steps:
+      - name: Start Midnight proof-server:9.0.2 container and verify health from host
+        run: |
+          docker run -d --name proof-server -p 6300:6300 midnightntwrk/proof-server:9.0.2
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:6300/health; then
+              echo ""
+              echo "proof-server:9.0.2 is ONLINE!"
+              break
+            fi
+            sleep 3
+          done
+          curl -sf http://127.0.0.1:6300/health
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
