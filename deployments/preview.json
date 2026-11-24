@@ -1,0 +1,250 @@
+{
+  "schema": "ASSIZE-DEPLOYMENT-MANIFEST-V1",
+  "network": "preview",
+  "compactVersion": "0.36.1",
+  "runtimeVersion": "0.21.0",
+  "midnightJsVersion": "5.0.1",
+  "proofServerVersion": "9.0.2",
+  "explorerBaseUrl": "https://preview.midnightexplorer.com",
+  "endpoints": {
+    "indexerGraphql": "https://indexer.preview.midnight.network/api/v4/graphql",
+    "indexerWs": "wss://indexer.preview.midnight.network/api/v4/graphql/ws",
+    "nodeRpc": "https://rpc.preview.midnight.network"
+  },
+  "status": "LIVE_VERIFIED",
+  "updatedAt": "2026-11-24T06:23:20.407Z",
+  "deployments": [
+    {
+      "label": "Tender A — Clean Fair Award (FINALIZED)",
+      "tenderCode": "PW-2026-041-A",
+      "expectedOutcome": "FINALIZED",
+      "contractAddress": "a1e23cade2bf29e29d919a7d51d7db027f63f32276096568eb6b267a8a58a1a9",
+      "deployedAt": "2026-11-24T06:12:20.505Z",
+      "verifiedPhase": "FINALIZED",
+      "verifiedAwardedPriceCents": "88500000",
+      "verifiedZeroLosingPricesOnChain": true,
+      "transactions": [
+        {
+          "step": "0. Deploy Tender",
+          "circuit": "constructor",
+          "txId": "005b5dae322a7eea2dcc9f6550254a95dc1c7f355a1782dac9da2ddaec64b06b0c",
+          "txHash": "0b392b44988276e03351163ba1d7a92dff0047329d7d40ea67793c4f484cadca",
+          "blockHeight": 247392,
+          "note": "Deployed Assize contract (PW-2026-041-A, budget cap $1,200,000, 10% surety bond)"
+        },
+        {
+          "step": "1.1 Seal Bid Slot #0",
+          "circuit": "submitSealedBid",
+          "txId": "005dcfcf93a3ab78c8531641b8f63389e115a7012c7f0d708ab0f4b2a18124988b",
+          "txHash": "f7073d4579b8620d1445c68f525cef367fc3980cbd3c9a534ff1c4a9ac940d01",
+          "blockHeight": 247398,
+          "note": "Slot #0 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "1.2 Seal Bid Slot #1",
+          "circuit": "submitSealedBid",
+          "txId": "00793e141b921292903c095ac4e327636d7e4b50ad9b0e04bfb66d9d3bfbc19f85",
+          "txHash": "82a585dbc0fac91ec5bd8fee8e1900324c19dbc166ccbdd01ac1b652085bba47",
+          "blockHeight": 247403,
+          "note": "Slot #1 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "1.3 Seal Bid Slot #2",
+          "circuit": "submitSealedBid",
+          "txId": "0014ae14d291591226dcf9d1aafc0e7e91806b479835d3a32834e52599b38c1420",
+          "txHash": "857bc6717f170558c78c86d282a48090c4754f122fa93c84d8ad8e8026d9b3ea",
+          "blockHeight": 247408,
+          "note": "Slot #2 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "1.4 Seal Bid Slot #3",
+          "circuit": "submitSealedBid",
+          "txId": "00497cac6df5488a4d676f306fec502de4bdcc3921fa40025e55f4d716ba899c4d",
+          "txHash": "1fb63bbc017d10c413a158ef0b95f4a2cff2dd7369a254ebf5dff3c715151b71",
+          "blockHeight": 247413,
+          "note": "Slot #3 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "2. Freeze Bidding Root",
+          "circuit": "closeBidding",
+          "txId": "0094b0786ccf6dd700d0e76e57e57d24b07b08b2cd2769e11dcd3dd6f509cfcd17",
+          "txHash": "7cbd1b5f3c9e90a545390c6fec2dde5457553bc4a5ebf4b7b3f9a24be7cdc1fa",
+          "blockHeight": 247416,
+          "note": "OPEN -> REVEAL (frozenBidCount=4 & frozenCommitRoot locked)"
+        },
+        {
+          "step": "3.1 Deliver Opening Receipt Slot #0",
+          "circuit": "deliverOpening",
+          "txId": "00e0c5fb776db5581b8655d9c82b802efb010a38da67b06260f7afac5abae58fb1",
+          "txHash": "0060bf328a0120ecd331b89f1edf1962970acc018c262963856dc4a5bd67359b",
+          "blockHeight": 247420,
+          "note": "Slot #0 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "3.2 Deliver Opening Receipt Slot #1",
+          "circuit": "deliverOpening",
+          "txId": "00c3482b5c96cacaf2943374f6f6754b7f891335f7cbaae9eef46e874bbb4218a9",
+          "txHash": "9c8cc8ec9d21e5f0f1a63e7b7ce3ddb0a342a6632196a9cdf6783f20c6ecb31f",
+          "blockHeight": 247424,
+          "note": "Slot #1 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "3.3 Deliver Opening Receipt Slot #2",
+          "circuit": "deliverOpening",
+          "txId": "00b1d898234066ddd43c5b22509aee8406e55ec16b8832862a3f84ca6fa7a166cb",
+          "txHash": "dae9a4664695ade776857180638521fe32c57cf5811d09876b550f33134e5b20",
+          "blockHeight": 247428,
+          "note": "Slot #2 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "3.4 Deliver Opening Receipt Slot #3",
+          "circuit": "deliverOpening",
+          "txId": "00c4e42f6b38071553bc1b884463210a7b41d9bf14ce8b498942014214006807c1",
+          "txHash": "fc5a55f1dd623965882296b56ce447a79055592145a9ac19ae5ae87e79969590",
+          "blockHeight": 247432,
+          "note": "Slot #3 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "4. Lock Reveal Window",
+          "circuit": "closeReveal",
+          "txId": "00e12e809f1678af1d8a3f8dd003ab448c8b8bb3288a7960950b34f894f161771c",
+          "txHash": "17d2605371774d964be708b78c07c76fd29e67c516d433904c1a7f76e37e3fb4",
+          "blockHeight": 247435,
+          "note": "REVEAL -> EVALUATION barrier locked"
+        },
+        {
+          "step": "5. Prove Honest Complete-Set Award",
+          "circuit": "proveAward",
+          "txId": "00eb79b4df8c6d39194e81e27af752aee9eb751889e9940597de16b2dd1dd8f7ac",
+          "txHash": "98e7e44e758df097c93292853e131b5b6786e381d249f04425b7c3b42e6f3a22",
+          "blockHeight": 247443,
+          "note": "Slot #1 ($885,000) proven lowest compliant bidder; Slot #3 proved OVER_BUDGET"
+        },
+        {
+          "step": "6. Finalize Uncontested Award",
+          "circuit": "finalizeAward",
+          "txId": "00dbe2306e767adedf48f8fb89f16cc9493c95399090d44c0e84855f70e4316150",
+          "txHash": "a8149e1897db26d439f3340684a1e383e5345fec72d76ab93a88b8068c4a4f8a",
+          "blockHeight": 247446,
+          "note": "AWARDED -> FINALIZED permanently on-chain"
+        }
+      ]
+    },
+    {
+      "label": "Tender B — Pretextual Exclusion Caught (CONTESTED)",
+      "tenderCode": "PW-2026-041-B",
+      "expectedOutcome": "CONTESTED",
+      "contractAddress": "3baf3aa1d01016d3700b97fd551ff30657e900e0f06f14068ec47cf5a01050f3",
+      "deployedAt": "2026-11-24T06:18:02.589Z",
+      "verifiedPhase": "CONTESTED",
+      "verifiedAwardedPriceCents": "94000000",
+      "verifiedZeroLosingPricesOnChain": true,
+      "transactions": [
+        {
+          "step": "0. Deploy Tender",
+          "circuit": "constructor",
+          "txId": "00350fc25391f7804e5d0c1ad62a54567e071babab1bcfb3f8cdbe57db437d1b6d",
+          "txHash": "7c66fcba81ef682f51837a5bbd53c7056b4ef7b5ad27e6c2a9ec5259dbde0e2d",
+          "blockHeight": 247449,
+          "note": "Deployed Assize contract (PW-2026-041-B, budget cap $1,200,000, 10% surety bond)"
+        },
+        {
+          "step": "1.1 Seal Bid Slot #0",
+          "circuit": "submitSealedBid",
+          "txId": "0028e503059b4309ec2e9f8d280244427028e615ae2bfe710d2ee03ede021b6609",
+          "txHash": "3592e225c9734886faafbb053625f89f39a0c4808d0aadb8a2475684f51762a0",
+          "blockHeight": 247454,
+          "note": "Slot #0 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "1.2 Seal Bid Slot #1",
+          "circuit": "submitSealedBid",
+          "txId": "005b21d9c26b8629894ff960af7bee03467e0ae36c6e5dc679adce7d1045445899",
+          "txHash": "2e071ba8c1a96d0df11a6c9f4e0c7b2a6f8da41c891eddf0b7b45abfd5007355",
+          "blockHeight": 247459,
+          "note": "Slot #1 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "1.3 Seal Bid Slot #2",
+          "circuit": "submitSealedBid",
+          "txId": "00cbc5853704cc174d8b74f18e577b012d13d2f702711843ceff55219ce4ed8d33",
+          "txHash": "e446d0ac6b86b76f3ab8d9616b9be4f9f7695e201afa3c0b68f0eee21ddc7850",
+          "blockHeight": 247464,
+          "note": "Slot #2 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "1.4 Seal Bid Slot #3",
+          "circuit": "submitSealedBid",
+          "txId": "00411e302c862c3e477804ff24c977dded61050a4503ed074e9584cbbe6dd618c5",
+          "txHash": "6e614356b146d196fa2dc54c4ecb61c191b3cd18e389674cc897a9566e0a7862",
+          "blockHeight": 247469,
+          "note": "Slot #3 commitment anchored (Merkle membership + 10% bond proven in ZK)"
+        },
+        {
+          "step": "2. Freeze Bidding Root",
+          "circuit": "closeBidding",
+          "txId": "001f4f74b5b6324ae542bfee06dd045b3f8be88174e4123f19b43a887ef81ad0ec",
+          "txHash": "a4132f5858873aa4daf358f8652ce78695b7b3a912608b14152c1de24a98beec",
+          "blockHeight": 247472,
+          "note": "OPEN -> REVEAL (frozenBidCount=4 & frozenCommitRoot locked)"
+        },
+        {
+          "step": "3.1 Deliver Opening Receipt Slot #0",
+          "circuit": "deliverOpening",
+          "txId": "00648ec20e1151e6cb7d7d1edfe6da238771bfdad2432dcac00ed410e319fe9fce",
+          "txHash": "881a25e29b250269f6388145778892b2702caeaaff97a02208a416daeef187f4",
+          "blockHeight": 247476,
+          "note": "Slot #0 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "3.2 Deliver Opening Receipt Slot #1",
+          "circuit": "deliverOpening",
+          "txId": "00acf5624022f16fc522936d0d8ec9a1a49a18c64747791b3eaa63b7980a6bafb8",
+          "txHash": "5f5237359717b8e00f0abedd4c4bf6e1f4120af1a38788c9f922c0a1ef3ba5eb",
+          "blockHeight": 247480,
+          "note": "Slot #1 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "3.3 Deliver Opening Receipt Slot #2",
+          "circuit": "deliverOpening",
+          "txId": "0093bccd5c415958c8cfdd880c45df6a9ae42cb21b6b48faa70c023ac1f80e76ba",
+          "txHash": "cb45371c0956a6f2cc762f00af503f5391fc4f4e35d84cbceb076ec4ba8d0bd9",
+          "blockHeight": 247484,
+          "note": "Slot #2 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "3.4 Deliver Opening Receipt Slot #3",
+          "circuit": "deliverOpening",
+          "txId": "00697f38666ada2ffb03154669897e61bf859b7ee33f84889eb575ebbe9c3a074e",
+          "txHash": "bb85ddb8a672a6cc07e9f66078e574a0be174bf4114625b420fced2e12bb2f67",
+          "blockHeight": 247488,
+          "note": "Slot #3 WebCrypto envelope encrypted off-chain; sha256 receipt anchored on-chain"
+        },
+        {
+          "step": "4. Lock Reveal Window",
+          "circuit": "closeReveal",
+          "txId": "004463651a3dd2b72f483c107d050bd81f3ee9f597350eb69cbeb10a0be2d5fade",
+          "txHash": "86a7ce462643a2eed9d19bb05dbdfdffb491e9740c9f19ad16112e0bb76f566e",
+          "blockHeight": 247491,
+          "note": "REVEAL -> EVALUATION barrier locked"
+        },
+        {
+          "step": "5. Prove Award with Pretextual Exclusion",
+          "circuit": "proveAward",
+          "txId": "00e92faa665b958b03b8ed1981126ffaa1e92bbca8c779a307645bb0caa9683424",
+          "txHash": "ec89af2985809829679e2738045e3311aa0238de7e8772b382fcb2950b1ccb92",
+          "blockHeight": 247498,
+          "note": "Slot #1 marked NOT_RESPONSIBLE with public evidenceHash; Slot #0 awarded $940,000"
+        },
+        {
+          "step": "6. File ZK Protest (Slot #1, Price Hidden)",
+          "circuit": "challengeAward",
+          "txId": "00ca15fde646a73c9b48073ef3552a7e869bd1641598ec4b57647be30514728de1",
+          "txHash": "73775dcd6a6dcbaaa65f0b748b11514b0e087b33edf94a4cc0511ae4d0d03aa8",
+          "blockHeight": 247502,
+          "note": "Slot #1 proved myPrice < $940,000 in ZK WITHOUT disclosing $885,000 -> CONTESTED"
+        }
+      ]
+    }
+  ]
+}
